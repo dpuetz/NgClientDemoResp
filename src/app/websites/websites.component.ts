@@ -6,8 +6,7 @@ import { IMessage, Message } from '../shared/imessage';
 
 
 @Component({
-    templateUrl: './websites.component.html',
-    styleUrls: ['./websites.component.css']
+    templateUrl: './websites.component.html'
 })
 
 export class WebsitesComponent implements OnInit {

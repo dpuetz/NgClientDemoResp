@@ -43,7 +43,7 @@
 
 
     <div  *ngIf = "website.websiteName" class="panel-header header-style">
-        <div class="website-header"><h4>Website name:  {{website.websiteName}} </h4></div>
+        <div class="website-header"><h4>Website name:  {{websiteName}} </h4></div>
     </div>
 
         <form novalidate [formGroup]="websiteForm" (ngSubmit)="saveIt()">
@@ -127,14 +127,14 @@
         <div class="row" >
         <div style="margin-left:20px;">
                 <div class="pull-left bottom-right-space">
-                    <button class="btn btn-info" [disabled]="wasSubmitted && !websiteForm.valid"
+                    <button class="btn btn-info" [disabled]="!websiteForm.valid"
                         type="submit">Save</button>
                 </div>
                 <div class="pull-left bottom-right-space" *ngIf = "website.websiteID > 0" >
-                    <button class="btn btn-info " (click)="deleteIt();">Delete</button>
+                    <button class="btn btn-info" type="button" (click)="deleteIt();">Delete</button>
                 </div>
                 <div class="pull-left bottom-right-space" >
-                    <button class="btn btn-info" routerLink = "/websites">Cancel</button>
+                    <button class="btn btn-info"  type="button" routerLink = "/websites">Cancel</button>
                 </div>
         </div>
         </div>

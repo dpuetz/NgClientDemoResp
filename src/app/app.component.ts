@@ -3,14 +3,13 @@ import { Router, Event, NavigationStart, NavigationEnd, NavigationError, Navigat
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  templateUrl: './app.component.html'
 })
 export class AppComponent {
 
     loading: boolean = true;
 
-    constructor( private router:Router) {  
+    constructor( private router:Router) {
         router.events.subscribe(
             (routerEvent: Event) => {
                 this.checkRouterEvent(routerEvent);
@@ -27,7 +26,7 @@ export class AppComponent {
         if  (routerEvent instanceof NavigationEnd ||
              routerEvent instanceof NavigationCancel  ||
              routerEvent instanceof NavigationError ) {
-                 
+
                 this.loading = false;
             }
 

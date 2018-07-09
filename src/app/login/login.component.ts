@@ -8,8 +8,7 @@ import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['../app.component.css']
+  templateUrl: './login.component.html'
 })
 
 export class LoginComponent implements OnInit {
@@ -26,14 +25,14 @@ export class LoginComponent implements OnInit {
     ngOnInit() {
         this.model = {username:'Guest', password:'Password'};
     }
-    
-    loginIn(loginForm: NgForm): void {   
+
+    loginIn(loginForm: NgForm): void {
         this.submitted = true;
         if (!loginForm.valid)
             return;
 
         this.loginService.doLogin(this.model)
-            .subscribe(val => 
+            .subscribe(val =>
                 {
                     if (val)
                         this.router.navigate(['/websites']);
@@ -41,7 +40,7 @@ export class LoginComponent implements OnInit {
                         this.badLogin();
                 },
                 error => this.badLogin()
-            ); //subscribe   
+            ); //subscribe
     }//loginIn
 
     badLogin(): void {

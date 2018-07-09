@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component,  OnDestroy, OnInit } from '@angular/core';
 import { IPurchase, Purchase } from './ipurchase'
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
-import { WebsiteService } from '../websites/website.service';
+import { WebsiteService } from './website.service';
+import { FormGroup, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { IMessage, Message } from '../shared/imessage';
-import { ProductSaveService } from './product-save.service';
+import { Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   templateUrl: './purchase.component.html',
@@ -13,153 +15,208 @@ import { ProductSaveService } from './product-save.service';
 export class PurchaseComponent implements OnInit, OnDestroy {
 
     purchase: IPurchase;
-    websiteName: string = '';
-    websiteId: number = 0;
-    wasSubmitted: boolean;
+    websiteName: string;
+    websiteId: number;
+    productNameMsg:string;
+    purchaseForm: FormGroup;
     popup : IMessage;
-    navigationSubscription;
-
-    private dataIsValid: {[key: string]: boolean} = {};
-   
-    get wasSubmittedService():boolean { 
-        return this.saveService.wasSubmitted; 
-    } 
-    set wasSubmittedService(value: boolean) { 
-        this.saveService.wasSubmitted = value; 
-    }          
+    navigationSubscription: Subscription;
+    subProductName: Subscription;
+    a2eOptions: any = {format: 'M/D/YYYY'};
+    private validationMessages: { [key: string]: { [key: string]: string } };
 
     constructor(
-                    private route: ActivatedRoute,
-                    private router: Router,        
-                    private websiteService: WebsiteService,
-                    private saveService: ProductSaveService) {    
+        private route: ActivatedRoute,
+        private router: Router,
+        private websiteService: WebsiteService,
+        private fb: FormBuilder
+    ) {
             this.navigationSubscription = this.router.events.subscribe((e: any) => {
                 // If it is a NavigationEnd event, then re-initalise the component
                 if (e instanceof NavigationEnd) {
                     this.initializePurchaseDetail();
                 }
-            });  
+            });
 
-         }//constructor
+            // Define all of the validation messages for the form.
+            this.validationMessages = {
+                productName: {
+                    required: 'Purchase name is required.'
+                }
+            };
+    }//constructor
 
+    ngOnInit():void {
+        this.purchaseForm = this.fb.group({
+            purchaseID: 0,
+            productName: ['', [Validators.required]],
+            purchasedOn: '',
+            arrivedOn:  '',
+            totalAmount:  0,
+            shippingAmount: 0,
+            notes:      '',
+        });  //purchaseForm
 
-    ngOnInit(): void {
-        this.initializePurchaseDetail();        
-    } 
+        const productNameControl = this.purchaseForm.get('productName');
+        this.subProductName = productNameControl.valueChanges
+                .pipe(debounceTime(100))
+                .subscribe(value => {
+                            this.setMessage(productNameControl, 'productName');
+                        }
+        );
 
-    initializePurchaseDetail(): void {
+    }//ngOnInit
 
-        this.wasSubmittedService = false;
+   setMessage(c: AbstractControl, name: string): void {
+        switch (name)   {
+            case 'productName':
+                this.productNameMsg = '';
+                if ((c.touched || c.dirty) && c.errors) {
+                    this.productNameMsg = Object.keys(c.errors).map(key =>
+                                this.validationMessages.productName[key]).join(' ');
+                }
+                break;
+        } //switch
 
-        // [routerLink]="['/websites', website.websiteID, 'purchase', purchase.purchaseID]"
-        // [queryParams] = "{websiteName: website.websiteName}">
+    } //setMessage
 
-        //get the queryparam websiteName from queryParams
-        this.websiteName = this.route.snapshot.queryParams.websiteName;        
-
-        //get websiteId from required parameters
+    initializePurchaseDetail(){    //re-set values
         this.route.paramMap.subscribe(params => {
-            this.websiteId = +params.get('websiteId'); 
-        }); //subscribe
 
-        //get purchase from resolved data
-        this.route.data.subscribe(data => {
-             this.purchase = data['purchase'];
-        });       
-    } //initializePurchaseDetail
+            if (this.purchaseForm) {
+                this.purchaseForm.reset();
+            }
+
+            this.websiteName = '';
+            this.websiteId = 0;
+
+            let purchaseId = +params.get('purchaseId');
+            this.websiteId = +params.get('websiteId');
+
+            this.purchase = new Purchase();
+            this.purchase.websiteID = this.websiteId;
+
+            this.getWebsite(this.websiteId);
+            this.getPurchase(this.websiteId, purchaseId);
+        });
+
+    }//initializePurchaseDetail
 
 
-    isValid (path: string): boolean {
-        this.validate();
-        if (path) {
-            return this.dataIsValid[path];
-        } else {
+    getPurchase(websiteId: number, purchaseId: number): void {
 
-            let x = Object.keys(this.dataIsValid).every (d => this.dataIsValid[d] === true);
-            return (this.dataIsValid &&
-                    Object.keys(this.dataIsValid).every (d => this.dataIsValid[d] == true));
-        }    
+        if (! websiteId || websiteId == 0) {
+            this.router.navigate(['/websites']);
+        }
+        else if (purchaseId == 0) {
+            this.purchase = new Purchase();
+        }
+        else {
+            this.websiteService.getPurchase(websiteId, purchaseId)
+                .subscribe(purchase =>
+                    {
+                        this.purchase = purchase;
+                        this.purchaseForm.patchValue({
+                            purchaseID: this.purchase.purchaseID,
+                            productName: this.purchase.productName,
+                            purchasedOn:  this.purchase.purchasedOn,
+                            arrivedOn:  this.purchase.arrivedOn,
+                            totalAmount: this.purchase.totalAmount,
+                            shippingAmount:this.purchase.shippingAmount,
+                            notes: this.purchase.notes,
+                        });  //purchaseForm
+                        window.scrollTo(0, 0);
 
-    }
+                    },
+                    error => {
+                        this.popup = new Message('alert', 'Sorry, an error has occurred', "", 0);
+                        window.scrollTo(0, 0);
+                    });
+        } //if
 
-    validate(): void {
+    }//getPurchase
 
-        this.dataIsValid = {};
-
-        //main tab     
-        if ( this.purchase.productName && this.purchase.productName.length > 1 )
-            this.dataIsValid['main'] = true;
+    getWebsite(websiteID: number): void  //just to get the website name
+    {
+        if (websiteID == 0)
+        {
+            this.router.navigate(['/websites']);
+        }
         else
-            this.dataIsValid['main'] = false;
+        {
+            this.websiteService.getWebsiteById(websiteID)
+                .subscribe(website =>
+                        {
+                            this.websiteName = website.websiteName;
+                        },
+                        error =>
+                        {
+                            //don't show any errors here.
+                        });
+        }
+    }  //getWebsite
 
-        //notes tab
-        if (this.purchase.notes)
-            this.dataIsValid['notes'] = true;
-        else
-            this.dataIsValid['notes'] = false;
-    }
-   
-    
-    ///////deleting
-    deleteIt(): void{
-        this.popup = new Message('confirm', 'Are sure you want to delete this purchase?', "onComplete", 0);       
-    }
     onComplete(event:any):void {
         //if they confirm in the message-component dialog launched by this.deleteIt();
-        this.websiteService.deletePurchase(this.purchase.purchaseID, this.websiteId)
-        .subscribe(val => 
-                    {                                                              
-                        if (val) {                                                     
-                            //show success msg for 1 sec then route back to websites list
-                            this.popup = new Message('timedAlert', 'Delete was successful!', "", 1000);
-                            setTimeout (() => {
-                                this.router.navigate(['/websites', this.websiteId, 'detail' ]);
-                            }, 1000);  
-                        } else {
-                            this.popup = new Message('alert', 'Sorry, an error occurred while deleting the purchase.', "", 0);    
-                        }
-                    });//subscribe
-    }//onComplete  
-     
-    //////////saving
+                this.websiteService.deletePurchase(this.purchase.purchaseID, this.websiteId)
+                .subscribe(val =>
+                            {
+                                    //show success msg for 1 sec and route back to the website
+                                    this.popup = new Message('timedAlert', 'Delete was successful!', "", 1000);
+                                    setTimeout (() => {
+                                        this.router.navigate(['/websites', this.websiteId, 'detail' ]);
+                                    }, 1000);
+                                },
+                                error =>
+                                {
+                                    this.popup = new Message('alert', 'Sorry, an error occurred while deleting the purchase.', "", 0);
+                                }
+                    );//subscribe
+    }//onComplete
+
+    deleteIt(): void{
+        this.popup = new Message('confirm', 'Are sure you want to delete this purchase?', "onComplete", 0);
+    }
+
     saveIt(): void {
 
-        this.wasSubmittedService = true;
+        let p = Object.assign({}, this.purchase, this.purchaseForm.value);
+        p.websiteID = this.websiteId; //website.id might not be there, so add it here for calling the webservice.
+        console.log(p);
 
-        if (!this.isValid(null)) {
-            return;
-        }
-        
-        this.purchase.websiteID = this.websiteId; //website.id might not be there, so add it here for calling the webservice.
-          
-        this.websiteService.savePurchase(this.purchase)
-            .subscribe(savedPurchase => 
+        this.websiteService.savePurchase(p)
+            .subscribe(savedPurchase =>
                 {
-                    if (savedPurchase) {
-                        //now refresh the purchase with data from service. Probably not necessary.
-                        this.purchase = savedPurchase;
+                    //now refresh the purchase with data from service. Probably not necessary.
+                    this.purchase = savedPurchase;
+console.log(this.purchase);
 
-                        //We now have to update the component with a reroute reroute back to this component or will might have problems: and the url still says id = 0, and more issues as user keeps adding new websites.
-                        //Delay the re-route for a bit so user can see the saved message first.
-                        this.popup = new Message('timedAlert', 'Save was successful!', "", 1000);
-                        setTimeout (() => {
-                           this.router.navigate(['/websites', this.purchase.websiteID, 'purchase', this.purchase.purchaseID]); 
-                            // this.router.navigate(['/websites', this.websiteId, 'detail']); 
-                        }, 1000);  
+                    //We now have to update the component with a reroute reroute back to this component or will might have problems: and the url still says id = 0, and more issues as user keeps adding new websites.
+                    //Delay the re-route for a bit so user can see the saved message first.
+                    this.popup = new Message('timedAlert', 'Save was successful!', "", 1000);
 
-                    } else {
-                        this.popup = new Message('alert', 'Sorry, an error occurred while saving the purchase.', "", 0);   
-                    }
+                    setTimeout (() => {
+                        this.router.navigate(['/websites/', this.purchase.websiteID, 'purchase', this.purchase.purchaseID]);
+                    }, 1000);
 
-                }); //subscribe          
-    }  //saveIt   
+                },
+                error =>
+                {
+                    this.popup = new Message('alert', 'Sorry, an error occurred while saving the purchase.', "", 0);
+
+                }); //subscribe
+    }  //saveIt
 
      ngOnDestroy() {
-            // !important - avoid memory leaks caused by navigationSubscription 
-            if (this.navigationSubscription) {  
+            // !important - avoid memory leaks caused by navigationSubscription
+            if (this.navigationSubscription) {
                 this.navigationSubscription.unsubscribe();
             }
-     }    
+            if (this.subProductName) {
+                this.subProductName.unsubscribe();
+            }
+     }
+
 
 
 } //class

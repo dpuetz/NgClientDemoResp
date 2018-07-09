@@ -10,20 +10,21 @@ import { debounceTime } from 'rxjs/operators';
 
 
 @Component({
-    templateUrl: './website-detail.component.html',
-    styleUrls: ['./website-detail.component.css']
+    templateUrl: './website-detail.component.html'
 })
 
 export class WebsiteDetailComponent implements OnDestroy, OnInit {
 
     website: IWebsite = new Website();
-    wasSubmitted: boolean = false;
     popup : IMessage;
     websiteForm: FormGroup;
     websiteNameMsg:string;
     urlMsg: string;
+    websiteName: string;
     private validationMessages: { [key: string]: { [key: string]: string } };
     private sub: Subscription;
+    private subWebsiteName: Subscription;
+    private subUrl: Subscription;
 
     constructor(  private route: ActivatedRoute,
                   private router: Router,
@@ -54,24 +55,27 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
         });  //websiteForm
 
         const urlControl = this.websiteForm.get('url');
-        urlControl.valueChanges
-            .pipe(debounceTime(1000))
-            .subscribe(value =>
-                    this.setMessage(urlControl, 'url')
+        this.subUrl = urlControl.valueChanges
+                .pipe(debounceTime(1000))
+                .subscribe(value =>
+                        this.setMessage(urlControl, 'url')
         );
 
         const websiteNameControl = this.websiteForm.get('websiteName');
-        websiteNameControl.valueChanges
-            .pipe(debounceTime(1000))
-            .subscribe(value =>
-                    this.setMessage(websiteNameControl, 'websiteName')
+        this.subWebsiteName = websiteNameControl.valueChanges
+                // .pipe(debounceTime(1000))
+                .subscribe(value => {
+                            this.websiteName = value;
+                            this.setMessage(websiteNameControl, 'websiteName');
+                        }
         );
 
-        this.sub = this.route.data.subscribe(
+        this.sub = this.route.data.subscribe(  //https://angular.io/guide/router says that unsubscribing to activated route in unnecessary
             data => this.onResolved(data['website'])
         );
 
     }//ngOnInit
+
 
    setMessage(c: AbstractControl, name: string): void {
         switch (name)   {
@@ -84,7 +88,7 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
                 break;
             case 'url':
                 this.urlMsg = '';
-                if ((c.touched || c.dirty) && c.errors) {
+              if ((c.touched || c.dirty) && c.errors) {
                     this.urlMsg = Object.keys(c.errors).map(key =>
                             this.validationMessages.url[key]).join(' ');
                 }
@@ -92,7 +96,6 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
         } //switch
 
     } //setMessage
-
 
     /////////getting
     onResolved(website: IWebsite): void {
@@ -118,7 +121,7 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
             isBill: this.website.isBill
         });
 
-        window.scrollTo(0, 0);
+        // window.scrollTo(0, 0);
 
     } //onResolved
 
@@ -153,43 +156,36 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
     }
 
     /////////saving
-    //saveIt(websiteForm: NgForm): void{
-    saveIt(websiteForm: any): void{
+    saveIt(): void{
+        // this.website: original data bound to template
+        // this.websiteForm.value: new form data on template now
+        let w = Object.assign({}, this.website, this.websiteForm.value);
+        console.log(w);  //w: object with new form data
 
-            console.log(this.website);  //original data bound to template
-            console.log(this.websiteForm.value); //new form data on template now
-            let p = Object.assign({}, this.website, this.websiteForm.value);
-            console.log(p);  //object with new form data
+        this.websiteService.saveWebsite(w)
+            .subscribe(webserviceWebsiteID =>
+                    {
 
-        // this.wasSubmitted = true;
-        // if (!websiteForm.valid)
-        //     return;
+                        if (webserviceWebsiteID === null) {
+                            this.saveError();
+                        } else {
 
-        // this.websiteService.saveWebsite(this.website)
-        //     .subscribe(webserviceWebsiteID =>
-        //             {
+                            //We now have to update the component with a reroute back to this component or will have problems: and the url still says id = 0, and more issues as user keeps adding new websites.
+                            //Delay the re-route for a bit so user can see the saved message first.
+                            this.popup = new Message('timedAlert', 'Save was successful!', "", 1000);
 
-        //                 if (webserviceWebsiteID === null) {
-        //                     this.saveError();
-        //                 } else {
+                            // window.scrollTo(0, 0);
+                            setTimeout (() => {
+                               this.router.navigate(['/websites/', webserviceWebsiteID, 'detail']);
+                            }, 1000);
+                        }
 
-        //                     //We now have to update the component with a reroute back to this component or will have problems: and the url still says id = 0, and more issues as user keeps adding new websites.
-        //                     //Delay the re-route for a bit so user can see the saved message first.
-        //                     this.popup = new Message('timedAlert', 'Save was successful!', "", 1000);
+                    },
+                    error => this.saveError()
 
-        //                     window.scrollTo(0, 0);
-        //                     setTimeout (() => {
-        //                        this.router.navigate(['/websites/', webserviceWebsiteID, 'detail']);
-        //                     }, 1000);
-        //                 }
-
-        //             },
-        //             error => this.saveError()
-
-        //         ); //subscribe
+                ); //subscribe
 
     }//save it
-
 
     saveError() : void {
         this.popup = new Message('alert', 'Sorry, an error occurred while saving the website.', "", 0);
@@ -204,6 +200,8 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
 
     ngOnDestroy(): void {
         this.sub.unsubscribe();
+        this.subWebsiteName.unsubscribe();
+        this.subUrl.unsubscribe();
     }
 
   }//class

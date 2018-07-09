@@ -12,9 +12,9 @@ import { Routes, RouterModule } from '@angular/router';
 import { WebsiteService } from './website.service';
 import { WebsiteDetailResolver } from './website-detail.resolver';
 import { PurchaseResolver } from './purchase.resolver';
-import { PurchaseMainComponent } from './purchase-main.component';
-import { PurchaseNotesComponent } from './purchase-notes.component';
-import { ProductSaveService } from './product-save.service';
+// import { PurchaseMainComponent } from './purchase-main.component';
+// import { PurchaseNotesComponent } from './purchase-notes.component';
+// import { ProductSaveService } from './product-save.service';
 import { ReactiveFormsModule } from '@angular/forms';
 
 
@@ -61,22 +61,22 @@ const routes: Routes = [
             path: ':websiteId/purchase/:purchaseId',
             component: PurchaseComponent,
             resolve: {purchase: PurchaseResolver},
-            children: [
-                {
-                    path: '',
-                    redirectTo: 'main',
-                    pathMatch: 'full'
-                },
-                {
-                    path: 'main',
-                    component: PurchaseMainComponent
-                },
-                {
-                    path: 'notes',
-                    component: PurchaseNotesComponent
-                }
+            // children: [
+            //     {
+            //         path: '',
+            //         redirectTo: 'main',
+            //         pathMatch: 'full'
+            //     }
+                // {
+                //     path: 'main',
+                //     component: PurchaseMainComponent
+                // },
+                // {
+                //     path: 'notes',
+                //     component: PurchaseNotesComponent
+                // }
 
-            ]
+            // ]
         }
 ]
 
@@ -94,9 +94,8 @@ imports: [
   declarations: [
     WebsitesComponent,
     WebsiteDetailComponent,
-    PurchaseComponent,
-    PurchaseMainComponent,
-    PurchaseNotesComponent
+    PurchaseComponent
+
   ],
 
   providers: [
@@ -104,7 +103,6 @@ imports: [
         useValue: CustomCurrencyMaskConfig
     }
     , WebsiteService
-    , ProductSaveService
 ]
 
 })
