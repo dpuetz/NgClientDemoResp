@@ -1,0 +1,64 @@
+
+<message [popup]="popup" (complete)="onComplete($event)"></message> 
+
+<div class="container container-wide">
+
+<div class="panel" >
+        <nav class="navbar navbar-default ">
+                <div class="container-fluid">
+                    <ul class="nav navbar-nav">
+                      <li class="navbarCollapseNone">
+                        <a  [routerLink] = "['/websites', websiteId, 'detail']">
+                          <i class="fa fa-angle-double-left"></i>
+                          Back</a>
+                      </li>
+                    </ul>
+                </div>
+          </nav>
+        
+<div class="panel-header">
+    <div class="website-header"><h4>Purchase for {{websiteName}}</h4></div>
+</div>      
+
+<div class="panel-body">
+
+        <div class="wizard">
+            <a [routerLink]="['main']" routerLinkActive="active"> Details
+                  <span [ngClass]="{'glyphicon glyphicon-exclamation-sign':
+                                                      !isValid('main') && wasSubmittedService}"></span>
+            </a>
+            <a [routerLink]="['notes']" routerLinkActive="active"> Notes
+                  <span  [ngClass]="{'glyphicon glyphicon-exclamation-sign':
+                                                      !isValid('notes') && wasSubmittedService}"></span>
+            </a>
+        </div>
+
+        <router-outlet></router-outlet>
+
+ </div> <!--panel-body-->
+
+  <div class="panel-footer">
+      <div class="row" >
+      <div style="margin-left:20px;">
+                    <div class="pull-left bottom-right-space"  >
+                      <button class="btn btn-info"
+                            [disabled]="!isValid(null) && wasSubmittedService"
+                            (click)="saveIt();">Save</button>
+                    </div>                        
+                    <div class="pull-left bottom-right-space " >
+                      <button class="btn btn-info " (click)="deleteIt();"  *ngIf = "purchase.purchaseID > 0">Delete</button>
+                    </div>
+                    <div class="pull-left bottom-right-space" >              
+                      <button class="btn btn-info" 
+                            [routerLink] = "['/websites', websiteId, 'detail']">
+                            Cancel</button>                       
+                    </div>
+      </div>            
+      </div>  <!--row-->           
+      </div>  <!--panel-footer-->
+                
+
+
+</div> <!--panel-->
+
+</div> <!-- container -->
