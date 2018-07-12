@@ -1,62 +1,56 @@
 
-<message [popup]="popup" (complete)="onComplete($event)"></message> 
+<message [popup]="popup" (complete)="onComplete($event)"></message>
 
 <div class="container container-wide "  >
 <div class="panel">
 
 <div class="panel-heading" >
     <h1>Login</h1>
-</div> 
+</div>
 
 <div class="panel-body">
-<div class="row">    
+<div class="row">
 
-    <div class="col-sm-4 hidden-xs">                            
+    <div class="col-sm-4 hidden-xs">
         <img [src]="'assets/cat.jpg'"  alt="login" class="img-responsive"  />
-    </div>  
+    </div>
     <div class="col-sm-8">
-        <form class="form"
-              #loginForm="ngForm" 
+
+        <form [formGroup]="loginForm" (ngSubmit)="loginIn()"
               novalidate
-              (keydown.enter)="loginIn(loginForm)">    
+              class="form">
             <div class="form-group">
                 <label class="control-label">User name</label>
                 <input type="text"
                        name="username"
                        class="form-control"
                        placeholder="User name"
-                       required
-                       [(ngModel)] = "model.username"
-                       #username="ngModel"   
+                       formControlName="username"
                         />
-                <div *ngIf = "!username.valid && submitted" class="alert alert-danger">
-                        User name is required.
-                </div>                         
+                <div *ngIf = "usernameMsg" class="alert alert-danger">
+                        {{usernameMsg}}
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="password" class="control-label">Password</label>
-                <input type="password" 
-                    id="password"                                                                    
+                <input type="password"
+                    id="password"
                     class="form-control"
                     placeholder="Password"
-                    required
-                    name="password"   
-                    [(ngModel)] = "model.password"
-                    #password="ngModel"
+                    formControlName="password"
                     />
-                <div *ngIf = "!password.valid && submitted" class="alert alert-danger">
-                        User name is required.
-                </div>                      
-        </div>            
+                <div *ngIf = "passwordMsg" class="alert alert-danger">
+                        {{passwordMsg}}
+                </div>
+        </div>
 
             <div class="form-group" >
-                    <button     
-                            [disabled] = "submitted && !loginForm.valid"  
-                            (click)="loginIn(loginForm)"
+                    <button type="submit"
+                            [disabled] = "!loginForm.valid"
                             class="btn btn-info" >
                             Login
-                    </button>                                
+                    </button>
             </div>
 
         </form>

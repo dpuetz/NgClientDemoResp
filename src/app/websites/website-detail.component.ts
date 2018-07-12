@@ -7,6 +7,7 @@ import { FormGroup, FormBuilder, Validators, AbstractControl } from '@angular/fo
 import { IMessage, Message } from '../shared/imessage';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { PurchaseParameterService } from './purchase-parameter.service';
 
 
 @Component({
@@ -20,7 +21,14 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
     websiteForm: FormGroup;
     websiteNameMsg:string;
     urlMsg: string;
-    websiteName: string;
+
+    get websiteNameDisplay (): string {
+        return this.purchaseParams.websiteName;
+    }
+    set websiteNameDisplay(value:string) {
+        this.purchaseParams.websiteName = value;
+    }
+
     private validationMessages: { [key: string]: { [key: string]: string } };
     private sub: Subscription;
     private subWebsiteName: Subscription;
@@ -29,7 +37,8 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
     constructor(  private route: ActivatedRoute,
                   private router: Router,
                   private websiteService: WebsiteService,
-                  private fb: FormBuilder) {
+                  private fb: FormBuilder,
+                  private purchaseParams: PurchaseParameterService) {
                     // Define all of the validation messages for the form.
                     this.validationMessages = {
                         url: {
@@ -65,7 +74,7 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
         this.subWebsiteName = websiteNameControl.valueChanges
                 // .pipe(debounceTime(1000))
                 .subscribe(value => {
-                            this.websiteName = value;
+                            this.websiteNameDisplay = value;
                             this.setMessage(websiteNameControl, 'websiteName');
                         }
         );
@@ -120,6 +129,7 @@ export class WebsiteDetailComponent implements OnDestroy, OnInit {
             preferred: this.website.preferred,
             isBill: this.website.isBill
         });
+        this.websiteNameDisplay = this.website.websiteName;
 
         // window.scrollTo(0, 0);
 

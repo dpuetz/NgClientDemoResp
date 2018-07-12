@@ -6,6 +6,7 @@ import { FormGroup, FormBuilder, Validators, AbstractControl } from '@angular/fo
 import { IMessage, Message } from '../shared/imessage';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { PurchaseParameterService } from './purchase-parameter.service';
 
 @Component({
   templateUrl: './purchase.component.html',
@@ -29,7 +30,8 @@ export class PurchaseComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private websiteService: WebsiteService,
-        private fb: FormBuilder
+        private fb: FormBuilder,
+        private purchaseParams: PurchaseParameterService
     ) {
             this.navigationSubscription = this.router.events.subscribe((e: any) => {
                 // If it is a NavigationEnd event, then re-initalise the component
@@ -96,7 +98,7 @@ export class PurchaseComponent implements OnInit, OnDestroy {
             this.purchase = new Purchase();
             this.purchase.websiteID = this.websiteId;
 
-            this.getWebsite(this.websiteId);
+            this.websiteName = this.purchaseParams.websiteName;
             this.getPurchase(this.websiteId, purchaseId);
         });
 
@@ -110,51 +112,36 @@ export class PurchaseComponent implements OnInit, OnDestroy {
         }
         else if (purchaseId == 0) {
             this.purchase = new Purchase();
+            this.purchase.websiteID = this.websiteId;
         }
         else {
             this.websiteService.getPurchase(websiteId, purchaseId)
                 .subscribe(purchase =>
                     {
-                        this.purchase = purchase;
-                        this.purchaseForm.patchValue({
-                            purchaseID: this.purchase.purchaseID,
-                            productName: this.purchase.productName,
-                            purchasedOn:  this.purchase.purchasedOn,
-                            arrivedOn:  this.purchase.arrivedOn,
-                            totalAmount: this.purchase.totalAmount,
-                            shippingAmount:this.purchase.shippingAmount,
-                            notes: this.purchase.notes,
-                        });  //purchaseForm
-                        window.scrollTo(0, 0);
+                        if (!purchase) {
+                            this.showGetPurchaseErr();
+                        } else {
+                            this.purchase = purchase;
+                            this.purchaseForm.patchValue({
+                                purchaseID: this.purchase.purchaseID,
+                                productName: this.purchase.productName,
+                                purchasedOn:  this.purchase.purchasedOn,
+                                arrivedOn:  this.purchase.arrivedOn,
+                                totalAmount: this.purchase.totalAmount,
+                                shippingAmount:this.purchase.shippingAmount,
+                                notes: this.purchase.notes,
+                            });  //purchaseForm
+                            window.scrollTo(0, 0);
+                        }
 
-                    },
-                    error => {
-                        this.popup = new Message('alert', 'Sorry, an error has occurred', "", 0);
-                        window.scrollTo(0, 0);
-                    });
+                    }); //subscribe
         } //if
 
     }//getPurchase
-
-    getWebsite(websiteID: number): void  //just to get the website name
-    {
-        if (websiteID == 0)
-        {
-            this.router.navigate(['/websites']);
-        }
-        else
-        {
-            this.websiteService.getWebsiteById(websiteID)
-                .subscribe(website =>
-                        {
-                            this.websiteName = website.websiteName;
-                        },
-                        error =>
-                        {
-                            //don't show any errors here.
-                        });
-        }
-    }  //getWebsite
+    showGetPurchaseErr(): void {
+        this.popup = new Message('alert', 'Sorry, an error has occurred', "", 0);
+        window.scrollTo(0, 0);
+    }
 
     onComplete(event:any):void {
         //if they confirm in the message-component dialog launched by this.deleteIt();
@@ -181,15 +168,12 @@ export class PurchaseComponent implements OnInit, OnDestroy {
     saveIt(): void {
 
         let p = Object.assign({}, this.purchase, this.purchaseForm.value);
-        p.websiteID = this.websiteId; //website.id might not be there, so add it here for calling the webservice.
-        console.log(p);
 
         this.websiteService.savePurchase(p)
             .subscribe(savedPurchase =>
                 {
                     //now refresh the purchase with data from service. Probably not necessary.
                     this.purchase = savedPurchase;
-console.log(this.purchase);
 
                     //We now have to update the component with a reroute reroute back to this component or will might have problems: and the url still says id = 0, and more issues as user keeps adding new websites.
                     //Delay the re-route for a bit so user can see the saved message first.
@@ -216,7 +200,5 @@ console.log(this.purchase);
                 this.subProductName.unsubscribe();
             }
      }
-
-
 
 } //class

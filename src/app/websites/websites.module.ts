@@ -12,10 +12,8 @@ import { Routes, RouterModule } from '@angular/router';
 import { WebsiteService } from './website.service';
 import { WebsiteDetailResolver } from './website-detail.resolver';
 import { PurchaseResolver } from './purchase.resolver';
-// import { PurchaseMainComponent } from './purchase-main.component';
-// import { PurchaseNotesComponent } from './purchase-notes.component';
-// import { ProductSaveService } from './product-save.service';
 import { ReactiveFormsModule } from '@angular/forms';
+import { PurchaseParameterService } from './purchase-parameter.service';
 
 
 export const CustomCurrencyMaskConfig: CurrencyMaskConfig = {
@@ -99,10 +97,12 @@ imports: [
   ],
 
   providers: [
-    {   provide: CURRENCY_MASK_CONFIG,
-        useValue: CustomCurrencyMaskConfig
+    {
+        provide: CURRENCY_MASK_CONFIG,
+        useValue: CustomCurrencyMaskConfig,
     }
     , WebsiteService
+    , PurchaseParameterService
 ]
 
 })

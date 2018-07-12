@@ -42,8 +42,8 @@
     <div class="panel-body">
 
 
-    <div  *ngIf = "website.websiteName" class="panel-header header-style">
-        <div class="website-header"><h4>Website name:  {{websiteName}} </h4></div>
+    <div  *ngIf = "websiteNameDisplay" class="panel-header header-style">
+        <div class="website-header"><h4>Website name:  {{websiteNameDisplay}} </h4></div>
     </div>
 
         <form novalidate [formGroup]="websiteForm" (ngSubmit)="saveIt()">

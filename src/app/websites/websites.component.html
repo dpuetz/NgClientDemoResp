@@ -1,8 +1,8 @@
-<message [popup]="popup" (complete)="onComplete($event)"></message>  
+<message [popup]="popup" (complete)="onComplete($event)"></message>
 
 <div class="container container-wide">
 
-<div class="panel" >    
+<div class="panel" >
         <nav class="navbar navbar-default ">
                 <div class="container-fluid  ">
                     <ul class="nav navbar-nav ">
@@ -14,50 +14,41 @@
         </nav>
 <div class="panel-body">
 
-<form #form="ngForm" >   
-    
-    <div class="form-group ">
+<form [formGroup]="searchForm" (ngSubmit)="doSearch()">
+    <div class="form-group">
         <div class="input-group">
-              <input type="text" 
-                    class="form-control" 
-                    placeholder="Search for..." 
-                    name="searchWord"
-                    #searchWord="ngModel"
-                    [(ngModel)]="search.searchWord"    
-                    (keyup.enter)="doSearch()"        
+              <input type="text"
+                    class="form-control"
+                    placeholder="Search for..."
+                    formControlName="searchWord"
                     />
                 <span class="input-group-btn" >
-                <button class="btn btn-info" (click)="doSearch()" type="button">
+                <button type="submit" class="btn btn-info">
                     Go!
                 </button>
                 </span>
         </div> <!--input-group-->
 </div> <!--form-group-->
-        
+
 <div class="row">
     <div class="col-sm-12">
             <div class="pull-left right-space ">
-                    <div class="checkbox checkbox-info" >                    
-                        <input type="checkbox" 
-                            id="isPreferred" 
-                            name="isPreferred"
-                            [(ngModel)]="search.isPreferred"
-                            (change)="doCheckSearch()" 
-                            #isPreferred="ngModel"
+                    <div class="checkbox checkbox-info" >
+                        <input type="checkbox"
+                            id="isPreferred"
+                            formControlName="isPreferred"
                             class="styled"
                             />
                         <label for="isPreferred">Preferred sites</label>
                     </div>
             </div>
+
             <div class=" pull-left">
-                    <div class="checkbox checkbox-info ">                    
-                        <input type="checkbox" 
-                            id="isBill" 
-                            name="isBill"
-                            #isBill="ngModel"
-                            [(ngModel)]="search.isBill"
-                            (change)="doCheckSearch()" 
-                            class="styled" 
+                    <div class="checkbox checkbox-info ">
+                        <input type="checkbox"
+                            id="isBill"
+                            formControlName="isBill"
+                            class="styled"
                             />
                         <label for="isBill">Monthly Bills</label>
                     </div>
@@ -82,8 +73,8 @@
                         <th >Website Name</th>
                     </tr>
                 </thead>
-                <tbody >                 
-                    <tr *ngFor="let website of websites" 
+                <tbody >
+                    <tr *ngFor="let website of websites"
                         [routerLink] = "['/websites', website.websiteID, 'detail']">
                        <td><i *ngIf = "website.preferred" class="fa fa-check smallFont"></i></td>
                        <td><i *ngIf = "website.isBill" class="fa fa-check smallFont"></i></td>
@@ -92,20 +83,20 @@
                 </tbody>
             </table>
         </div>
-        
+
     </div> <!-- container-fluid -->
 
 
 
 
 
-    
 
 
 
 
 
-        
+
+
 </form>
 </div> <!--panel-body-->
 </div> <!--panel-->
